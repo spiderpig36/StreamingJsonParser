@@ -54,7 +54,5 @@ While simple and effective, `StreamingJsonParser` has some **known limitations**
 - **No whitespace skipping**: Whitespace between tokens is not automatically ignored; the input must be tightly formatted.
 - **No escape character handling**: Strings cannot currently contain escaped quotes (`\"`) or other escape sequences.
 - **Only simple values**: Only strings (quoted), numbers, booleans (`true`/`false`), and `null` are supported as values.
-- **Single chunk expectation for keys/values**: If a key or value is split across multiple `consume` calls (in extreme streaming scenarios), the parser could fail.
-- **Strict format**: Unexpected characters or improperly formatted JSON will immediately raise an exception.
 
 ---
