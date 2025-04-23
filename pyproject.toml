@@ -1,5 +1,5 @@
 [project]
-name = "deepjudge-challenge"
+name = "streaming-json-parser"
 version = "0.1.0"
 description = ""
 authors = [
@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [{include = "deepjudge_challenge", from = "src"}]
+packages = [{include = "streaming_json_parser", from = "src"}]
 
 
 [tool.poetry.group.dev.dependencies]

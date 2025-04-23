@@ -12,7 +12,7 @@ It reads and builds JSON objects without requiring the full document to be loade
   - Objects with string keys and primitive values (strings, numbers, booleans, `null`).
   - Nested objects (arbitrary depth).
 - **Type detection**: Automatically converts values to appropriate Python types (`int`, `bool`, `None`).
-- **Error handling**: Raises exceptions when unexpected characters or structure inconsistencies (like mismatched brackets) are encountered.
+- **Error handling**: Raises SyntaxErrors when unexpected characters or structure inconsistencies (like mismatched brackets) are encountered.
 - **Stateful design**: Maintains internal parsing state to allow incremental feeding of input (`consume(buffer: str)`).
 
 ---

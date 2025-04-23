@@ -66,7 +66,7 @@ class StreamingJsonParser:
             case ValueType.NULL:
                 return None
             case _:
-                raise Exception(f"Parsing error: Invalid identifier {self.current_value}")
+                raise SyntaxError(f"Syntax error: Invalid identifier {self.current_value}")
 
     # Consume a buffer string, character by character, and parse it into the internal data structure
     def consume(self, buffer: str):
@@ -83,20 +83,20 @@ class StreamingJsonParser:
                     case ParsingState.KEY:
                         self.state = ParsingState.COLON
                         if self.__is_key_defined():
-                            raise Exception("Parsing error: key already defined")
+                            raise SyntaxError("Syntax error: key already defined")
                         self.__set_value(None)
                     case ParsingState.VALUE_STRING:
                         self.state = ParsingState.END_DELIMITER
                         self.__set_value(self.current_value)
                     case _:
-                        raise Exception("Parsing error: unexpected '\"'")
+                        raise SyntaxError("Syntax error: unexpected '\"'")
             if c == ':':
                 # Transition to expecting a value after a key
                 match self.state:
                     case ParsingState.COLON:
                         self.state = ParsingState.VALUE_BEGIN
                     case _:
-                        raise Exception("Parsing error: unexpected ':'")
+                        raise SyntaxError("Syntax error: unexpected ':'")
             if c == ',':
                 # End of a key-value pair; prepare for next key
                 match self.state:
@@ -106,7 +106,7 @@ class StreamingJsonParser:
                         self.state = ParsingState.KEY_BEGIN
                         self.__set_value(self.__get_casted_value())
                     case _:
-                        raise Exception("Parsing error: unexpected ','")
+                        raise SyntaxError("Syntax error: unexpected ','")
             elif c.isalnum():
                 # Handle alphanumeric characters inside keys or values
                 match self.state:
@@ -118,7 +118,19 @@ class StreamingJsonParser:
                         self.state = ParsingState.VALUE
                         self.current_value = c
                     case _:
-                        raise Exception(f"Parsing error: unexpected character {c}")
+                        raise SyntaxError(f"Syntax error: unexpected character {c}")
+            elif c == ' ':
+                # Handle space characters inside keys or values
+                match self.state:
+                    case ParsingState.VALUE_STRING:
+                        self.current_value += c
+                    case ParsingState.VALUE:
+                        self.state = ParsingState.END_DELIMITER
+                        self.__set_value(self.__get_casted_value())
+                    case ParsingState.KEY:
+                        self.state = ParsingState.COLON
+                    case _:
+                        continue
             if c == '{':
                 # Start of a new object
                 match self.state:
@@ -131,7 +143,7 @@ class StreamingJsonParser:
                         self.__set_value({})
                         self.current_path.append(self.current_key)
                     case _:
-                        raise Exception("Parsing error: unexpected '{'")
+                        raise SyntaxError("Syntax error: unexpected '{'")
             if c == '}':
                 # End of an object
                 match self.state:
@@ -141,7 +153,7 @@ class StreamingJsonParser:
                         if self.open_brackets > self.closed_brackets:
                             self.current_path.pop()
                         if self.open_brackets < self.closed_brackets:
-                            raise Exception("Parsing error: depth mismatch")
+                            raise SyntaxError("Syntax error: depth mismatch")
                     case ParsingState.VALUE:
                         self.state = ParsingState.END_DELIMITER
                         self.closed_brackets += 1
@@ -149,9 +161,9 @@ class StreamingJsonParser:
                             self.__set_value(self.__get_casted_value())
                             self.current_path.pop()
                         if self.open_brackets < self.closed_brackets:
-                            raise Exception("Parsing error: depth mismatch")
+                            raise SyntaxError("Syntax error: depth mismatch")
                     case _:
-                        raise Exception("Parsing error: unexpected '}'")
+                        raise SyntaxError("Syntax error: unexpected '}'")
 
     # Finalize parsing and return the parsed object
     def get(self):
