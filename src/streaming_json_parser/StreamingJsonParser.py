@@ -134,34 +134,26 @@ class StreamingJsonParser:
             if c == '{':
                 # Start of a new object
                 match self.state:
-                    case ParsingState.NONE:
-                        self.state = ParsingState.KEY_BEGIN
+                    case ParsingState.VALUE_BEGIN | ParsingState.NONE:
                         self.open_brackets += 1
-                    case ParsingState.VALUE_BEGIN:
+                        if self.state == ParsingState.VALUE_BEGIN:
+                            self.__set_value({})
+                            self.current_path.append(self.current_key)
                         self.state = ParsingState.KEY_BEGIN
-                        self.open_brackets += 1
-                        self.__set_value({})
-                        self.current_path.append(self.current_key)
                     case _:
                         raise SyntaxError("Syntax error: unexpected '{'")
             if c == '}':
                 # End of an object
                 match self.state:
-                    case ParsingState.END_DELIMITER:
-                        self.state = ParsingState.END_DELIMITER
+                    case ParsingState.VALUE | ParsingState.END_DELIMITER:
                         self.closed_brackets += 1
                         if self.open_brackets > self.closed_brackets:
+                            if self.state == ParsingState.VALUE:
+                                self.__set_value(self.__get_casted_value())
                             self.current_path.pop()
                         if self.open_brackets < self.closed_brackets:
                             raise SyntaxError("Syntax error: depth mismatch")
-                    case ParsingState.VALUE:
                         self.state = ParsingState.END_DELIMITER
-                        self.closed_brackets += 1
-                        if self.open_brackets > self.closed_brackets:
-                            self.__set_value(self.__get_casted_value())
-                            self.current_path.pop()
-                        if self.open_brackets < self.closed_brackets:
-                            raise SyntaxError("Syntax error: depth mismatch")
                     case _:
                         raise SyntaxError("Syntax error: unexpected '}'")
 
