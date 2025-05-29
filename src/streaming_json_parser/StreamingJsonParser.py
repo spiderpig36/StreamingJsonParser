@@ -2,21 +2,21 @@ from enum import Enum
 
 # Define possible parsing states during JSON stream parsing
 class ParsingState(Enum):
-    NONE = 0,           # Parsing has not begun yet
+    NONE = 0            # Parsing has not begun yet
     KEY_BEGIN = 1       # Beginning of a key
-    KEY = 2,            # Reading key characters
-    COLON = 4,          # Expecting a colon after key
-    VALUE_BEGIN = 5,    # Beginning of a value
-    VALUE_STRING = 6,   # Reading a quoted string value
-    VALUE = 7,          # Reading a non-string value (e.g., number, true/false, null)
+    KEY = 2             # Reading key characters
+    COLON = 4           # Expecting a colon after key
+    VALUE_BEGIN = 5     # Beginning of a value
+    VALUE_STRING = 6    # Reading a quoted string value
+    VALUE = 7           # Reading a non-string value (e.g., number, true/false, null)
     END_DELIMITER = 10  # After completing a key-value pair
 
 # Define types of values that can be parsed
 class ValueType(Enum):
-    INVALID = 1, # Unrecognized value
-    NUMBER = 2,  # Numeric value
-    BOOL = 3,    # Boolean value
-    NULL = 4,    # Null value
+    INVALID = 1 # Unrecognized value
+    NUMBER = 2  # Numeric value
+    BOOL = 3    # Boolean value
+    NULL = 4    # Null value
 
 class StreamingJsonParser:
     def __init__(self):
@@ -47,11 +47,11 @@ class StreamingJsonParser:
 
     # Determine the type of the current value
     def __get_value_type(self):
-        if self.current_value in "true" or self.current_value in "false":
+        if "true".startswith(self.current_value) or "false".startswith(self.current_value):
             return ValueType.BOOL
         elif self.current_value.isnumeric():
             return ValueType.NUMBER
-        elif self.current_value in "null":
+        elif "null".startswith(self.current_value):
             return ValueType.NULL
         else:
             return ValueType.INVALID
@@ -62,7 +62,7 @@ class StreamingJsonParser:
             case ValueType.NUMBER:
                 return int(self.current_value)
             case ValueType.BOOL:
-                return self.current_value == "true"
+                return "true".startswith(self.current_value)
             case ValueType.NULL:
                 return None
             case _:
@@ -84,7 +84,7 @@ class StreamingJsonParser:
                         self.state = ParsingState.COLON
                         if self.__is_key_defined():
                             raise SyntaxError("Syntax error: key already defined")
-                        self.__set_value(None)
+                        self.current_value = None
                     case ParsingState.VALUE_STRING:
                         self.state = ParsingState.END_DELIMITER
                         self.__set_value(self.current_value)
@@ -107,7 +107,7 @@ class StreamingJsonParser:
                         self.__set_value(self.__get_casted_value())
                     case _:
                         raise SyntaxError("Syntax error: unexpected ','")
-            elif c.isalnum():
+            if c.isalnum():
                 # Handle alphanumeric characters inside keys or values
                 match self.state:
                     case ParsingState.KEY:
@@ -119,7 +119,7 @@ class StreamingJsonParser:
                         self.current_value = c
                     case _:
                         raise SyntaxError(f"Syntax error: unexpected character {c}")
-            elif c == ' ':
+            if c == ' ':
                 # Handle space characters inside keys or values
                 match self.state:
                     case ParsingState.VALUE_STRING:

@@ -17,6 +17,15 @@ def test_partial_value():
     result = parser.get()
     assert(json.dumps(result) == '{"test": "hello", "country": "Switzerland"}')
 
+def test_partial_boolean():
+    parser = StreamingJsonParser()
+    parser.consume('{"test": "hello", "finished": true')
+    result = parser.get()
+    assert(json.dumps(result) == '{"test": "hello", "finished": true}')
+    parser.consume('th')
+    with pytest.raises(SyntaxError):
+        result = parser.get()
+
 def test_partial_object():
     parser = StreamingJsonParser()
     parser.consume('{"user": {')
@@ -33,7 +42,7 @@ def test_complete_object():
     parser.consume(' enthusiast",')
     parser.consume('"location": { "city": "Zurich", "zip": 8')
     parser.consume('001 }')
-    parser.consume('} } ,')
+    parser.consume('} },')
     parser.consume('"sett')
     parser.consume('ings": { "theme": "dark",')
     parser.consume('"notifications": { "email": true, "sms": false,')
@@ -49,3 +58,12 @@ def test_syntax_error_bracket():
     with pytest.raises(SyntaxError):
         parser = StreamingJsonParser()
         parser.consume('{"test": "hello"} }')
+
+def test_depth_missmatch():
+    parser = StreamingJsonParser()
+    parser.consume('{"a": {')
+    parser.consume('"b": {')
+    parser.consume('"c": 123')
+    parser.consume('}}}')
+    result = parser.get()
+    assert(json.dumps(result) == '{"a": {"b": {"c": 123}}}')
